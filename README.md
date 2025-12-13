@@ -1,6 +1,7 @@
 ![Python 3.13](https://img.shields.io/badge/Python-3.13-green.svg)
 ![PyQt5](https://img.shields.io/badge/PyQT5-green.svg)
 ![ADB SDK](https://img.shields.io/badge/ADB-SDK-green.svg)
+![MTP](https://img.shields.io/badge/MTP-green.svg)
 ![license MIT](https://img.shields.io/badge/license-MIT-green.svg)
 ![platform Windows](https://img.shields.io/badge/platform-Windows-lightgrey.svg) 
 ![platform MacOS](https://img.shields.io/badge/platform-MacOS-lightgrey.svg) 
