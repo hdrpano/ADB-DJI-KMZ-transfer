@@ -5,210 +5,170 @@
 ![platform Windows](https://img.shields.io/badge/platform-Windows-lightgrey.svg) 
 ![platform MacOS](https://img.shields.io/badge/platform-MacOS-lightgrey.svg) 
 
-# KMZ Injector for DJI – Installation Guide (Windows & MacOS)
+# DJIKMZInjector
 
-KMZ Injector for DJI allows you to replace mission KMZ files and preview images on DJI RC or any Android tablet running DJI Fly.
+DJIKMZInjector is a lightweight desktop tool to replace DJI waypoint missions (KMZ)
+on the DJI RC 2 using either ADB or MTP.
+
+The tool focuses on reliability, transparency, and predictable behavior across macOS and Windows.
 ![DJI_ADB](img/window.png)
 
-The application requires **ADB (Android Debug Bridge)** for communication with the device.  
-Because of OS restrictions, the application cannot include ADB internally.  
-You must install ADB manually and select its path inside the app.
+---
+
+## Features
+
+- Replace DJI waypoint missions (.kmz) by UUID
+- Two connection modes:
+  - ADB (fast and very reliable)
+  - MTP (no developer mode required)
+- Automatic preview image handling
+- Safe DJI-compatible mission replacement
+- Works on macOS and Windows
+- No modification of mission content
+- Clean UI without background services
 
 ---
 
-# 📦 1. Install ADB
+## Connection Modes
 
-ADB must be installed manually on both Windows and macOS.
+### ADB (Recommended)
 
----
+ADB is the fastest and most reliable way to replace missions.
 
-# 🪟 Windows Installation
+Requirements:
+- ADB installed
+- USB debugging enabled on the DJI RC 2
 
-## Option A — Official Google SDK (recommended)
-
-1. Download the Platform Tools ZIP:  
-   https://developer.android.com/tools/releases/platform-tools
-
-2. Extract it to a location such as:
-   ```
-   C:\Android\platform-tools\
-   ```
-
-3. You will see files like:
-   ```
-   adb.exe
-   fastboot.exe
-   ```
-
-4. (Optional) Add the folder to PATH:
-   ```
-   System Settings → System → About → Advanced System Settings
-   → Environment Variables → Path → Add:
-   C:\Android\platform-tools\
-   ```
-
-5. Test:
-   ```
-   adb.exe version
-   ```
+ADB is recommended if you replace missions frequently or work with large files.
 
 ---
 
-# 🍏 macOS Installation
+### MTP (macOS and Windows)
 
-## Option A — Install via Homebrew (recommended)
+MTP allows mission replacement without enabling developer mode.
 
-```bash
-brew install android-platform-tools
-```
+Advantages:
+- No ADB required
+- Uses standard USB file transfer
 
-ADB will be here:
-
-- Apple Silicon: `/opt/homebrew/bin/adb`
-- Intel macOS: `/usr/local/bin/adb`
-
-## Option B — Install manually
-
-1. Download Platform Tools for macOS:  
-   https://developer.android.com/tools/releases/platform-tools
-
-2. Extract to:
-   ```
-   ~/Android/platform-tools/
-   ```
-
-3. Test:
-   ```bash
-   ~/Android/platform-tools/adb version
-   ```
+Limitations:
+- Slower than ADB
+- Requires careful handling on macOS
 
 ---
 
-# 🔓 2. Enable Developer Mode & USB Debugging (DJI RC / Android)
+## Important macOS MTP Information
 
-To allow ADB access, enable the hidden **Developer Options**.
+macOS does not provide a stable native MTP API comparable to ADB.
 
-## Enable Developer Mode
-1. Open **Settings**  
-2. Go to **About Device**  
-3. Tap **Build Number** **7 times**  
-4. You will see:
-   “You are now a developer!”
+Reliable MTP mission replacement on macOS required:
+- Handling delayed file visibility
+- Working around filesystem caching
+- Managing system processes that lock USB access
+- Implementing retry and timeout logic
+- Strict delete → upload → verify sequencing
 
-## Enable USB Debugging
-1. Go to **Settings → Developer Options**  
-2. Enable:
-   - **USB Debugging**  
-   - **Install via USB** (if available)  
-   - **USB Debugging (Security Settings)** (optional)
+The macOS MTP integration required several full days of development and testing
+to reach a stable and user-friendly result.
 
-3. Connect the device by USB  
-4. Accept the popup:
-   “Allow USB debugging?” → **Always allow** → OK
+The application automatically releases USB access when required.
+No dialogs, no user interaction, and no manual process handling are needed.
 
 ---
 
-# 🔌 3. Check ADB Connection
+## Preview Handling
 
-Run:
+Preview images are treated as a cache.
 
-```bash
-adb devices
-```
+Behavior:
+- On first application start, existing previews are reused
+- If a preview is missing, it is pulled from the device
+- After mission replacement or manual refresh, previews are reloaded from the device
 
-Expected output:
-
-```
-List of devices attached
-R8YW314JMFD   device
-```
-
-If it shows **unauthorized**, accept the prompt on the DJI controller/tablet.
+This ensures the preview always matches the mission stored on the DJI RC 2.
 
 ---
 
-# 🚀 4. Configure KMZ Injector for DJI
+## Typical Workflow
 
-### On Windows:
-Launch:
-```
-DJI_ADB.exe
-```
-
-### On macOS:
-Launch:
-```
-DJI ADB.app
-```
-
-### First Launch
-The application will ask for the path to your `adb` executable.
-
-Select:
-- Windows: `C:\Android\platform-tools\adb.exe`
-- macOS (Homebrew): `/opt/homebrew/bin/adb`
-- macOS manual install: `~/Android/platform-tools/adb`
-
-The path is saved in `config.yaml`.
+1. Connect the DJI RC 2 via USB
+2. Select ADB or MTP backend
+3. Refresh the mission list
+4. Select a mission by UUID
+5. Select a replacement KMZ file
+6. Replace the mission
+7. Preview updates automatically
 
 ---
 
-# 🗂 5. Using KMZ Injector
+## Technical Design Notes
 
-👉 Download the latest release here:
-🔗 https://github.com/hdrpano/ADB-DJI-KMZ-transfer/releases/tag/v1.0.0
-
-### ✔ Load missions  
-The app loads missions from the device:
-```
-/sdcard/Android/data/dji.go.v5/files/waypoint/
-```
-
-### ✔ Replace KMZ  
-Select a KMZ file → upload to DJI Fly.
-
-### ✔ Replace mission preview  
-The app adds a red centered **UPDATED** label to the preview and uploads it to:
-```
-/sdcard/Android/data/dji.go.v5/files/waypoint/map_preview/<UUID>/<UUID>.jpg
-```
-
-DJI Fly will sync missions automatically with DJI Cloud.
+- ADB and MTP are implemented as separate backends
+- The UI never blocks on system dialogs
+- Preview files are disposable cache data
+- The mission list is the single source of truth
+- macOS MTP behavior is treated as eventually consistent
 
 ---
 
-# 🛠 Troubleshooting
+## Troubleshooting
 
-### ❌ ADB server didn't ACK
-Run:
-```bash
-adb kill-server
-adb start-server
-```
+### macOS USB Access and Photos App
 
-### ❌ Device not listed
-Check:
-- USB debugging enabled  
-- Cable supports data  
-- Trusted popup confirmed  
-- Windows: correct USB driver installed  
+On macOS, the DJI RC 2 is detected as a media device.
+When this happens, Apple’s Photos app or related background services may
+automatically connect to the device.
 
-### ❌ Permission denied (macOS)
-Run:
-```bash
-xattr -d com.apple.quarantine <path-to-adb>
-```
+While Photos is connected, it holds exclusive access to the USB MTP interface.
+This prevents other applications from accessing mission files.
 
-### ❌ KMZ not uploaded
-Check:
-- Mission UUID folder exists  
-- Storage not full  
-- ADB path correct in config.yaml  
+DJIKMZInjector automatically handles this situation:
+
+- If Photos or related media services are using the USB connection,
+  DJIKMZInjector will release USB access automatically.
+- No user interaction is required.
+- The USB connection itself remains active.
+- A device reboot or cable reconnection is **not** necessary.
+
+This behavior allows seamless switching between ADB and MTP using the same USB
+connection and avoids unnecessary reconnects or restarts.
+
+This is expected macOS behavior and is handled intentionally to ensure a smooth
+and reliable workflow.
+
+### Device not detected (MTP)
+
+- Ensure the DJI RC 2 is unlocked
+- Close Photos or other media applications
+- Reconnect the USB cable
+- Press Refresh
+
+### Preview does not update
+
+- Press Refresh
+- The preview cache will be rebuilt automatically
+
+### Mission replacement fails
+
+- Verify the KMZ file is valid
+- Ensure the UUID exists on the device
+- Try ADB mode if available
 
 ---
 
-# 📧 Support
+## map-creator Compatibility
 
-Website: https://map-creator.com  
+DJIKMZInjector is fully compatible with missions created using map-creator.
 
-Thank you for using **KMZ Injector for DJI**!
+If you are looking for a professional DJI waypoint editor, visit:
+
+https://map-creator.com
+
+---
+
+## License
+
+Free for personal and professional use.
+
+No warranty is provided.
+Use at your own risk.
